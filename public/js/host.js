@@ -135,7 +135,7 @@ function getVideoUrl() {
   if (archiveId) {
     console.log('TRYING TO GET VIDEO URL');
     $.ajax({
-      url: `http://localhost:3000/video/${archiveId}`,
+      url: `https://opentok-demo-service.herokuapp.com/video/${archiveId}`,
       success: function(data){
         console.log(data);
         console.log(archiveId);
