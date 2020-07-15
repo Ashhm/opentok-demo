@@ -12,7 +12,12 @@
         </div>
         <div class="panel-body">
           <div id="streams">
-            <div id="publisher" class="focus"></div>
+            <div id="publisher" class="media"></div>
+            <div id="replay" class="media">
+             <video id="video-container" controls hidden>
+              Your browser does not support the video tag.
+            </video>
+            </div>
           </div>
         </div>
         <div class="panel-footer">
@@ -27,21 +32,9 @@
                           <input type="checkbox" name="hasVideo" checked> Video
                       </label>
                   </div>
-
-                  <div class="form-group">
-                      <p class="help-block">Output Mode:</p>
-                      <label class="radio-inline">
-                          <input type="radio" name="outputMode" value="composed" checked> Composed
-                      </label>
-                      <label class="radio-inline">
-                          <input type="radio" name="outputMode" value="individual"> Individual
-                      </label>
-                  </div>
               </fieldset>
           </form>
           <button class="btn btn-danger start" disabled>Start archiving</button>
-          <button class="btn btn-success stop">Stop archiving</button>
-          <button class="btn toggle-layout">Toggle layout</button>
         </div>
       </div>
     </div>
@@ -99,6 +92,7 @@
         var token = "<%= token %>";
         var focusStreamId = "<%= focusStreamId || '' %>";
         var layout = "<%= layout %>";
+        var videoUrl = "<%= videoUrl || '' %>";
     </script>
     <script src="/js/host.js"></script>
 

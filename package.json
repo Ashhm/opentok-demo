@@ -13,6 +13,7 @@
     "body-parser": "^1.12.4",
     "ejs": "^2.5.5",
     "express": "^3.5.0",
+    "express-longpoll": "0.0.6",
     "opentok": "^2.10.0"
   }
 }

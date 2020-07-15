@@ -1,10 +1,13 @@
 /* eslint-disable no-console, no-path-concat */
 
 // Dependencies
-var express = require('express');
-var bodyParser = require('body-parser');
-var OpenTok = require('opentok');
-var app = express();
+const express = require('express');
+const bodyParser = require('body-parser');
+const OpenTok = require('opentok');
+const Longpoll = require("express-longpoll");
+
+const app = express();
+const longpoll = Longpoll(app);
 
 var opentok;
 var apiKey = process.env.API_KEY || '46838614';
@@ -23,18 +26,11 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 
-// Starts the express app
-function init() {
-  app.listen(process.env.PORT || 3000, function () {
-    console.log('You\'re app is now ready at http://localhost:3000/');
-  });
-}
-
 // Initialize OpenTok
 opentok = new OpenTok(apiKey, apiSecret);
 
 // Create a session and store it in the express app
-opentok.createSession({ mediaMode: 'routed' }, function (err, session) {
+const session = opentok.createSession({ mediaMode: 'routed' }, function (err, session) {
   if (err) throw err;
   app.set('sessionId', session.sessionId);
   app.set('layout', 'horizontalPresentation');
@@ -42,8 +38,22 @@ opentok.createSession({ mediaMode: 'routed' }, function (err, session) {
   init();
 });
 
+// Starts the express app
+function init() {
+  app.listen(process.env.PORT || 3000, function () {
+    console.log('You\'re app is now ready at http://localhost:3000/');
+  });
+}
+
 app.get('/', function (req, res) {
   res.render('index.ejs');
+});
+
+app.post('/video', (req, res) => {
+  const { body = {} } = req;
+  const  { id: archiveId, url: videoUrl } = body;
+  longpoll.publish(`/video/${archiveId}`, { videoUrl });
+  res.end();
 });
 
 app.get('/host', function (req, res) {
@@ -59,7 +69,8 @@ app.get('/host', function (req, res) {
     sessionId: sessionId,
     token: token,
     focusStreamId: app.get('focusStreamId') || '',
-    layout: app.get('layout')
+    layout: app.get('layout'),
+    videoUrl: '',
   });
 });
 
@@ -101,16 +112,14 @@ app.get('/download/:archiveId', function (req, res) {
 app.post('/start', function (req, res) {
   var hasAudio = (req.param('hasAudio') !== undefined);
   var hasVideo = (req.param('hasVideo') !== undefined);
-  var outputMode = req.param('outputMode');
   var archiveOptions = {
-    name: 'Node Archiving Sample App',
+    name: 'Mati liveness check',
     hasAudio: hasAudio,
     hasVideo: hasVideo,
-    outputMode: outputMode
+    outputMode: 'composed',
+    layout: { type: 'horizontalPresentation' }
   };
-  if (outputMode === 'composed') {
-    archiveOptions.layout = { type: 'horizontalPresentation' };
-  }
+
   opentok.startArchive(app.get('sessionId'), archiveOptions, function (err, archive) {
     if (err) {
       return res.send(
@@ -118,16 +127,27 @@ app.post('/start', function (req, res) {
         'Could not start archive for session ' + app.get('sessionId') + '. error=' + err.message
       );
     }
+    setTimeout(() => {
+      stopArchive(archive.id);
+    }, 7000);
+    longpoll.create(`/video/${archive.id}`);
     return res.json(archive);
   });
+
+
 });
+
+function stopArchive(archiveId) {
+  opentok.stopArchive(archiveId, function (err, archive) {
+    if (err) return console.log('Could not stop archive ' + archiveId + '. error=' + err.message);
+    return archive;
+  });
+}
 
 app.get('/stop/:archiveId', function (req, res) {
   var archiveId = req.param('archiveId');
-  opentok.stopArchive(archiveId, function (err, archive) {
-    if (err) return res.send(500, 'Could not stop archive ' + archiveId + '. error=' + err.message);
-    return res.json(archive);
-  });
+  const archive = stopArchive(archiveId)
+  return res.json(archive);
 });
 
 app.get('/delete/:archiveId', function (req, res) {

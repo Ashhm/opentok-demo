@@ -7,7 +7,8 @@ var publisher = OT.initPublisher('publisher', {
   width: '100%',
   height: '100%'
 });
-var archiveID = null;
+var archiveId = null;
+var videoUrl = null;
 
 function disableForm() {
   $('.archive-options-fields').attr('disabled', 'disabled');
@@ -114,31 +115,57 @@ session.on('streamDestroyed', function (event) {
 });
 
 session.on('archiveStarted', function (event) {
-  archiveID = event.id;
+  archiveId = event.id;
   console.log('ARCHIVE STARTED');
-  $('.start').hide();
-  $('.stop').show();
+  $('.start').prop('disabled', true);
   disableForm();
+  setTimeout(() => {
+    archiveId = null;
+  }, 60 * 1000);
+  getVideoUrl();
 });
 
 session.on('archiveStopped', function () {
-  archiveID = null;
   console.log('ARCHIVE STOPPED');
-  $('.start').show();
-  $('.stop').hide();
+  $('.start').prop('disabled', false);
   enableForm();
 });
 
+function getVideoUrl() {
+  if (archiveId) {
+    console.log('TRYING TO GET VIDEO URL');
+    $.ajax({
+      url: `http://localhost:3000/video/${archiveId}`,
+      success: function(data){
+        console.log(data);
+        console.log(archiveId);
+        archiveId = null;
+        videoUrl = data.videoUrl;
+        console.log(videoUrl);
+        $("#video-container").html(`<source src="${videoUrl}" type="video/mp4"></source>` );
+        $("#video-container").show();
+        $("#video-container").load();
+      },
+      error: function() {
+        console.log('An error occurred during polling');
+        videoUrl = null;
+        getVideoUrl();
+      },
+      timeout: 60 * 1000
+    });
+  }
+};
+
+
+
 $(document).ready(function () {
   $('.start').click(function () {
+    $("#video-container").hide();
     var options = $('.archive-options').serialize();
     disableForm();
     $.post('/start', options)
       .fail(enableForm);
   }).prop('disabled', false);
-  $('.stop').click(function () {
-    $.get('stop/' + archiveID);
-  });
   $('.toggle-layout').click(function () {
     var newLayoutClass;
 
@@ -154,8 +181,8 @@ $(document).ready(function () {
     newLayoutClass = $('#streams').hasClass('vertical') ? 'verticalPresentation'
       : 'horizontalPresentation';
 
-    if (archiveID) {
-      $.post('archive/' + archiveID + '/layout', {
+    if (archiveId) {
+      $.post('archive/' + archiveId + '/layout', {
         type: newLayoutClass
       }).done(function () {
         console.log('Archive layout updated.');
