@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({
 
 // Starts the express app
 function init() {
-  app.listen(3000, function () {
+  app.listen(process.env.PORT || 3000, function () {
     console.log('You\'re app is now ready at http://localhost:3000/');
   });
 }
