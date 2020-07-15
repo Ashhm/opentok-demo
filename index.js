@@ -52,7 +52,7 @@ app.get('/', function (req, res) {
 app.post('/video', (req, res) => {
   const { body = {} } = req;
   console.log(req.body);
-  if (body.status = 'available') {
+  if (body.status === 'available') {
     const  { id: archiveId, url: videoUrl } = body;
     longpoll.publish(`/video/${archiveId}`, { videoUrl });
   }
