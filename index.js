@@ -88,7 +88,7 @@ app.get('/', (req, res) => {
 app.post('/video', (req, res) => {
   const { body = {} } = req;
   console.log(req.body);
-  if (body.status === 'available') {
+  if (body.status === 'uploaded') {
     const { id: archiveId } = body;
     const videoUrl = buildTemporaryLink(archiveId);
     console.log(videoUrl);
