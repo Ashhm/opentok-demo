@@ -10,7 +10,11 @@ const app = express();
 const longpoll = Longpoll(app);
 const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID;
 const s3AccessSecret = process.env.S3_ACCESS_SECRET;
-const s3 = new AWS.S3({ accessKeyId: s3AccessKeyId, secretAccessKey: s3AccessSecret });
+const s3 = new AWS.S3({
+  accessKeyId: s3AccessKeyId,
+  secretAccessKey: s3AccessSecret,
+  signatureVersion: 'v4',
+});
 const apiKey = process.env.API_KEY || '46838614';
 const apiSecret = process.env.API_SECRET || '53f3c5ebf4fe24a30e54b2b82578b08118cb7208';
 const getVideoBaseUrl = process.env.NODE_ENV === 'production'
