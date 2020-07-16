@@ -13,7 +13,7 @@ body {
   }
 }
 
-@media screen and (max-width: 1200px) {
+@media screen and (max-width: 900px) {
   #streams {
     flex-direction: column;
   }
@@ -28,8 +28,8 @@ body {
 }
 
 #streams > .media, #streams video {
-  width: 50rem;
-  height: 40rem;
+  width: 400px;
+  height: 300px;
   margin: 0;
 }
 
@@ -39,4 +39,10 @@ body {
 
 .bump-me {
   padding-top: 40px;
+}
+
+.panel-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
