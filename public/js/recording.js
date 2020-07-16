@@ -156,12 +156,30 @@ session.on('archiveStopped', () => {
   enableForm();
 });
 
+function getFormData($form) {
+  const unindexedArray = $form.serializeArray();
+  const indexedArray = {};
+
+  $.map(unindexedArray, (n) => {
+    indexedArray[n.name] = n.value;
+  });
+
+  return indexedArray;
+}
+
 $(document).ready(() => {
   $('.start').click(() => {
     $('#video-container').hide();
-    const options = $('.archive-options').serialize();
+    const options = getFormData($('.archive-options'));
+    // eslint-disable-next-line no-undef
+    options.sessionId = sessionId;
     disableForm();
-    $.post('/start', options)
+    const params = Object
+      .entries(options)
+      .reduce((result, [key, value], index) => (
+        `${result}${index ? '&' : ''}${key}=${value}`
+      ), '');
+    $.post('/start', params)
       .fail(enableForm);
   }).prop('disabled', false);
   $('.toggle-layout').click(() => {

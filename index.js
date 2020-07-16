@@ -56,7 +56,6 @@ app.get('/', (req, res) => {
   opentok.createSession({ mediaMode: 'routed' }, (err, session) => {
     if (err) throw err;
     app.set('layout', 'horizontalPresentation');
-    app.set('sessionId', session.sessionId);
     const token = opentok.generateToken(session.sessionId, {
       role: 'moderator',
       initialLayoutClassList: ['focus'],
@@ -88,6 +87,7 @@ app.post('/video', (req, res) => {
 app.post('/start', (req, res) => {
   const hasAudio = (req.param('hasAudio') !== undefined);
   const hasVideo = (req.param('hasVideo') !== undefined);
+  const sessionId = req.param('sessionId');
   const archiveOptions = {
     name: 'Mati liveness check',
     hasAudio,
@@ -96,11 +96,11 @@ app.post('/start', (req, res) => {
     layout: { type: 'horizontalPresentation' },
   };
 
-  opentok.startArchive(app.get('sessionId'), archiveOptions, (err, archive) => {
+  opentok.startArchive(sessionId, archiveOptions, (err, archive) => {
     if (err) {
       return res.send(
         500,
-        `Could not start archive for session ${app.get('sessionId')}. error=${err.message}`,
+        `Could not start archive for session ${sessionId}. error=${err.message}`,
       );
     }
     setTimeout(() => {
