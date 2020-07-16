@@ -1,13 +1,16 @@
 'use strict';
 
 const express = require('express');
+const AWS = require('aws-sdk');
 const bodyParser = require('body-parser');
 const OpenTok = require('opentok');
 const Longpoll = require('express-longpoll');
 
 const app = express();
 const longpoll = Longpoll(app);
-
+const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID;
+const s3AccessSecret = process.env.S3_ACCESS_SECRET;
+const s3 = new AWS.S3({ accessKeyId: s3AccessKeyId, secretAccessKey: s3AccessSecret });
 const apiKey = process.env.API_KEY || '46838614';
 const apiSecret = process.env.API_SECRET || '53f3c5ebf4fe24a30e54b2b82578b08118cb7208';
 const getVideoBaseUrl = process.env.NODE_ENV === 'production'
@@ -44,6 +47,17 @@ function stopArchive(archiveId) {
   });
 }
 
+function buildTemporaryLink(archiveId) {
+  const fullPath = `${apiKey}/${archiveId}/archive.mp4`;
+  const params = {
+    Bucket: 'io.mati.media-storage-dev',
+    Key: fullPath,
+    Expires: 60 * 10,
+    ResponseContentType: 'video/mp4',
+  };
+  return s3.getSignedUrl('getObject', params);
+}
+
 // Create a session and store it in the express app
 opentok.createSession({ mediaMode: 'routed' }, (err, session) => {
   if (err) throw err;
@@ -75,7 +89,9 @@ app.post('/video', (req, res) => {
   const { body = {} } = req;
   console.log(req.body);
   if (body.status === 'available') {
-    const { id: archiveId, url: videoUrl } = body;
+    const { id: archiveId } = body;
+    const videoUrl = buildTemporaryLink(archiveId);
+    console.log(videoUrl);
     longpoll.publish(`/video/${archiveId}`, { videoUrl });
   }
   res.end();
