@@ -56,6 +56,7 @@ app.get('/', (req, res) => {
   opentok.createSession({ mediaMode: 'routed' }, (err, session) => {
     if (err) throw err;
     app.set('layout', 'horizontalPresentation');
+    app.set('sessionId', session.sessionId);
     const token = opentok.generateToken(session.sessionId, {
       role: 'moderator',
       initialLayoutClassList: ['focus'],
