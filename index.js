@@ -32,12 +32,6 @@ app.use(bodyParser.urlencoded({
 // Initialize OpenTok
 const opentok = new OpenTok(apiKey, apiSecret);
 
-function init() {
-  app.listen(process.env.PORT || 3000, () => {
-    console.log('You\'re app is now ready at http://localhost:3000/');
-  });
-}
-
 function stopArchive(archiveId) {
   opentok.stopArchive(archiveId, (err, archive) => {
     if (err) {
@@ -58,30 +52,23 @@ function buildTemporaryLink(archiveId) {
   return s3.getSignedUrl('getObject', params);
 }
 
-// Create a session and store it in the express app
-opentok.createSession({ mediaMode: 'routed' }, (err, session) => {
-  if (err) throw err;
-  app.set('sessionId', session.sessionId);
-  app.set('layout', 'horizontalPresentation');
-  // We will wait on starting the app until this is done
-  init();
-});
-
 app.get('/', (req, res) => {
-  const sessionId = app.get('sessionId');
-  // generate a fresh token for this client
-  const token = opentok.generateToken(sessionId, {
-    role: 'moderator',
-    initialLayoutClassList: ['focus'],
-  });
+  opentok.createSession({ mediaMode: 'routed' }, (err, session) => {
+    if (err) throw err;
+    app.set('layout', 'horizontalPresentation');
+    const token = opentok.generateToken(session.sessionId, {
+      role: 'moderator',
+      initialLayoutClassList: ['focus'],
+    });
 
-  res.render('index.ejs', {
-    apiKey,
-    sessionId,
-    token,
-    focusStreamId: app.get('focusStreamId') || '',
-    layout: app.get('layout'),
-    getVideoBaseUrl,
+    res.render('index.ejs', {
+      apiKey,
+      sessionId: session.sessionId,
+      token,
+      focusStreamId: app.get('focusStreamId') || '',
+      layout: app.get('layout'),
+      getVideoBaseUrl,
+    });
   });
 });
 
@@ -127,4 +114,8 @@ app.get('/stop/:archiveId', (req, res) => {
   const archiveId = req.param('archiveId');
   const archive = stopArchive(archiveId);
   return res.json(archive);
+});
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log('You\'re app is now ready at http://localhost:3000/');
 });
