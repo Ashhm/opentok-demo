@@ -74,11 +74,9 @@ app.get('/', (req, res) => {
 
 app.post('/video', (req, res) => {
   const { body = {} } = req;
-  console.log(req.body);
   if (body.status === 'uploaded') {
     const { id: archiveId } = body;
     const videoUrl = buildTemporaryLink(archiveId);
-    console.log(videoUrl);
     longpoll.publish(`/video/${archiveId}`, { videoUrl });
   }
   res.end();
