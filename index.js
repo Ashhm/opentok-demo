@@ -76,6 +76,26 @@ app.get('/', (req, res) => {
   });
 });
 
+app.get('/init', (req, res) => {
+  opentok.createSession({ mediaMode: 'routed' }, (err, session) => {
+    if (err) throw err;
+    app.set('layout', 'horizontalPresentation');
+    const token = opentok.generateToken(session.sessionId, {
+      role: 'moderator',
+      initialLayoutClassList: ['focus'],
+    });
+
+    res.json({
+      apiKey,
+      sessionId: session.sessionId,
+      token,
+      focusStreamId: app.get('focusStreamId') || '',
+      layout: app.get('layout'),
+      getVideoBaseUrl,
+    });
+  });
+});
+
 app.post('/video', (req, res) => {
   const { body = {} } = req;
   if (body.status === 'uploaded' || body.status === 'available') {
