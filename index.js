@@ -15,8 +15,8 @@ const s3 = new AWS.S3({
   secretAccessKey: s3AccessSecret,
   signatureVersion: 'v4',
 });
-const apiKey = process.env.API_KEY || '46838614';
-const apiSecret = process.env.API_SECRET || '53f3c5ebf4fe24a30e54b2b82578b08118cb7208';
+const apiKey = process.env.API_KEY;
+const apiSecret = process.env.API_SECRET;
 const getVideoBaseUrl = process.env.NODE_ENV === 'production'
   ? 'https://opentok-demo-service.herokuapp.com'
   : 'http://localhost:3000';
@@ -78,9 +78,11 @@ app.get('/', (req, res) => {
 
 app.post('/video', (req, res) => {
   const { body = {} } = req;
-  if (body.status === 'uploaded') {
+  if (body.status === 'uploaded' || body.status === 'available') {
     const { id: archiveId } = body;
-    const videoUrl = buildTemporaryLink(archiveId);
+    const videoUrl = process.env.IS_S3_ENABLED === 'true'
+      ? buildTemporaryLink(archiveId)
+      : body.url;
     longpoll.publish(`/video/${archiveId}`, { videoUrl });
   }
   res.end();
